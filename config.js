@@ -61,11 +61,11 @@ global.prems = ['51995386439'];
 global.BASE_API_DELIRIUS = "https://deliriussapi-oficial.vercel.app";
 
 global.packname = 'Sticker';
-global.author = 'The Mystic - Bot';
-global.wm = 'The Mystic - Bot';
-global.titulowm = 'The Mystic - Bot';
-global.titulowm2 = `The Mystic - Bot`
-global.igfg = 'The Mystic - Bot';
+global.author = 'Megumin - Bot';
+global.wm = 'Megumin - Bot';
+global.titulowm = "Megumim - Bot';
+global.titulowm2 = `Megumin - Bot`
+global.igfg = 'Megumin - Bot';
 global.wait = '*_[ ⏳ ] Cargando..._*';
 
 /*global.imagen1 = fs.createReadStream('./src/assets/images/menu/languages/es/menu.png');
