@@ -1,46 +1,45 @@
-import {generateWAMessageFromContent} from "baileys";
+import { generateWAMessageFromContent } from "baileys";
 import * as fs from 'fs';
-// Para configurar o idioma, na raiz do projeto altere o arquivo config.json
-// Para configurar el idioma, en la raíz del proyecto, modifique el archivo config.json.
-// To set the language, in the root of the project, modify the config.json file.
 
-const handler = async (m, {conn, text, participants, isOwner, isAdmin}) => {
+const handler = async (m, { conn, text, participants }) => {
   try {
-    const users = participants.map((u) => conn.decodeJid(u.id));
-    const q = m.quoted ? m.quoted : m || m.text || m.sender;
-    const c = m.quoted ? await m.getQuotedObj() : m.msg || m.text || m.sender;
-    const msg = conn.cMod(m.chat, generateWAMessageFromContent(m.chat, {[m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : {text: '' || c}}, {quoted: m, userJid: conn.user.id}), text || q.text, conn.user.jid, {mentions: users});
-    await conn.relayMessage(m.chat, msg.message, {messageId: msg.key.id});
-  } catch {
-    /**
-[ By @NeKosmic || https://github.com/NeKosmic/ ]
-**/
+    // Obtener los JIDs (identificadores) de los participantes
+    const users = participants.map((u) => conn.decodeJid(u.id));  
 
-    const users = participants.map((u) => conn.decodeJid(u.id));
-    const quoted = m.quoted ? m.quoted : m;
-    const mime = (quoted.msg || quoted).mimetype || '';
-    const isMedia = /image|video|sticker|audio/.test(mime);
-    const more = String.fromCharCode(8206);
-    const masss = more.repeat(850);
-    const htextos = `${text ? text : '*Hola :D*'}`;
-    if ((isMedia && quoted.mtype === 'imageMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {image: mediax, mentions: users, caption: htextos, mentions: users}, {quoted: m});
-    } else if ((isMedia && quoted.mtype === 'videoMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {video: mediax, mentions: users, mimetype: 'video/mp4', caption: htextos}, {quoted: m});
-    } else if ((isMedia && quoted.mtype === 'audioMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {audio: mediax, mentions: users, mimetype: 'audio/mpeg', fileName: `Hidetag.mp3`}, {quoted: m});
-    } else if ((isMedia && quoted.mtype === 'stickerMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {sticker: mediax, mentions: users}, {quoted: m});
+    // Crear el mensaje que se enviará con las menciones ocultas
+    const htextos = `${text ? text : '*Hola :D*'}`;  // El mensaje que se enviará, si no se especifica, por defecto es "Hola :D".
+
+    // Se genera un mensaje sin mencionar al usuario que ejecutó el comando
+    const more = String.fromCharCode(8206);  // Caracter invisible para ocultar el texto
+    const masss = more.repeat(850);  // Repetir el caracter invisible para evitar que se muestre un mensaje vacío
+
+    // Si el mensaje es un sticker, se manejará de esta forma:
+    if (m.quoted && m.quoted.mtype === 'stickerMessage') {
+      const quoted = m.quoted;
+      const mediax = await quoted.download?.();  // Descargar el sticker
+
+      // Enviar el sticker con menciones ocultas
+      await conn.sendMessage(m.chat, {
+        sticker: mediax,
+        mentions: users  // Mencionamos a todos los usuarios
+      }, { quoted: null }); // No mencionamos al autor del comando
     } else {
-      await conn.relayMessage(m.chat, {extendedTextMessage: {text: `${masss}\n${htextos}\n`, ...{contextInfo: {mentionedJid: users, externalAdReply: {thumbnail: imagen1, sourceUrl: 'https://github.com/BrunoSobrino/TheMystic-Bot-MD'}}}}}, {});
+      // Si no es un sticker, simplemente enviamos el mensaje de texto con menciones
+      await conn.relayMessage(m.chat, {
+        extendedTextMessage: {
+          text: `${masss}\n${htextos}\n`, 
+          contextInfo: {
+            mentionedJid: users  // Se mencionan a todos los usuarios
+          }
+        }
+      }, {});
     }
+  } catch (err) {
+    console.error(err);  // Captura cualquier error y lo muestra en consola
   }
 };
-handler.command = /^(hidetag|notificar|notify)$/i;
-handler.group = true;
-handler.admin = true;
+
+handler.command = /^(hidetag|notificar|notify)$/i;  // Comandos aceptados: hidetag, notificar, notify.
+handler.group = true;  // Solo en grupos.
+handler.admin = true;  // Solo administradores.
 export default handler;
