@@ -1,51 +1,53 @@
-// TheMystic-Bot-MD@BrunoSobrino - _antiarab.js
-
-
 const handler = (m) => m;
-handler.before = async function (m, { conn, isAdmin, isBotAdmin, isOwner, isROwner }) {
-  const datas = global
-  let idioma = datas.db.data.users[m.sender].language 
-  // todo: sometimes this trows undefined.json ill fix
-  if (idioma === undefined || idioma === null) {
-    idioma = 'es'
-  }
-  const _translate = JSON.parse(fs.readFileSync(`./src/languages/${idioma}.json`))
 
-  const tradutor = _translate.plugins._antiarab
-  // Para configurar o idioma, na raiz do projeto altere o arquivo config.json
-  // Para configurar el idioma, en la raíz del proyecto, modifique el archivo config.json.
-  // To set the language, in the root of the project, modify the config.json file.
-
-  /* if (m.message) {
-    console.log(m.message)
-  }*/
-  if (!m.isGroup) return !1;
+handler.before = async function (m, { conn, isAdmin, isBotAdmin, participants }) {
+  if (!m.isGroup) return; // Solo en grupos
   const chat = global.db.data.chats[m.chat];
-  const bot = global.db.data.settings[conn.user.jid] || {};
-  if (isBotAdmin && chat.antiArab2 && !isAdmin && !isOwner && !isROwner && bot.restrict) {
-    if (m.sender.startsWith('212' || '212')) {
-      m.reply(tradutor.texto1);
-      const responseb = await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
-      if (responseb[0].status === '404') return;
+
+  // Lista de prefijos bloqueados
+  const prefixes = ['212', '265', '92', '234'];
+
+  // Comando "/see": menciona a los usuarios con prefijos bloqueados
+  if (m.text === '/see' && isAdmin) {
+    const filteredUsers = participants.filter((user) =>
+      prefixes.includes(user.id.slice(0, 3))
+    );
+
+    if (filteredUsers.length > 0) {
+      const mentions = filteredUsers.map((user) => `@${user.id.split('@')[0]}`).join('\n');
+      m.reply(`> Usuarios con prefijos bloqueados:\n${mentions}`, null, {
+        mentions: filteredUsers.map((user) => user.id),
+      });
+    } else {
+      m.reply('> No hay usuarios con los prefijos bloqueados en este grupo.');
+    }
+  }
+
+  // Comando "/kill": elimina a los usuarios con prefijos bloqueados
+  if (m.text === '/kill' && isAdmin) {
+    if (!isBotAdmin) {
+      return m.reply('El bot necesita permisos de administrador para eliminar usuarios.');
     }
 
-    if (m.sender.startsWith('265' || '265')) {
-      m.reply(tradutor.texto2);
-      const responseb = await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
-      if (responseb[0].status === '404') return;
-    }
+    const filteredUsers = participants.filter((user) =>
+      prefixes.includes(user.id.slice(0, 3))
+    );
 
-    if (m.sender.startsWith('92' || '92')) {
-      m.reply(tradutor.texto3);
-      const responseb = await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
-      if (responseb[0].status === '404') return;
+    if (filteredUsers.length > 0) {
+      try {
+        for (const user of filteredUsers) {
+          await conn.groupParticipantsUpdate(m.chat, [user.id], 'remove');
+          console.log(`Usuario ${user.id} eliminado por el comando "/kill".`);
+        }
+        m.reply('> Se ha eliminado a todos los usuarios con prefijos bloqueados.');
+      } catch (err) {
+        console.error('> Error al eliminar usuarios:', err);
+        m.reply('Hubo un error al intentar eliminar a los usuarios.');
+      }
+    } else {
+      m.reply('> No hay usuarios con los prefijos bloqueados en este grupo.');
     }
-
-    if (m.sender.startsWith('234' || '234')) {
-      m.reply(tradutor.texto3);
-      const responseb = await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
-      if (responseb[0].status === '404') return;
-    }                                                       
   }
 };
+
 export default handler;
