@@ -19,6 +19,18 @@ const handler = async (m, { conn, participants, command, usedPrefix }) => {
   if (mentioned && conn.user.jid.includes(mentioned)) 
     return m.reply(tradutor.texto4);
 
+  // Verificar si el mencionado es un admin
+  const isAdmin = participants.find(p => p.id === mentioned && p.admin !== null);
+
+  if (isAdmin) {
+    // Si el que ejecuta el comando es un admin y la persona mencionada también es admin, reaccionamos con "X"
+    if (m.isGroup && participants.find(p => p.id === m.sender && p.admin !== null)) {
+      await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
+      return;
+    }
+  }
+
+  // Eliminar al usuario mencionado (solo si no es admin)
   const responseb = await conn.groupParticipantsUpdate(m.chat, [mentioned], 'remove');
 
   // Reacción con emoji de fuego al mensaje original
