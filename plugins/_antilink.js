@@ -35,19 +35,29 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
       if (m.text.includes(linkThisGroup)) return !0;
     }
 
-    // Mensaje cuando se elimina al usuario (sin respuesta directa)
-    const kickMessage = `> Usuario eliminado por Anti-Link.`;
+    // Mensaje cuando se elimina al usuario (con etiqueta)
+    const kickMessage = `> Usuario @${m.sender.split('@')[0]} eliminado por Anti-Link.`;
 
-    // Enviar el mensaje explicativo sin responder a nadie
-    await this.sendMessage(m.chat, { text: kickMessage });
+    // Enviar el mensaje con la mención
+    await conn.sendMessage(m.chat, { 
+      text: kickMessage, 
+      mentions: [m.sender] 
+    });
 
     // Asegurarnos de que el bot elimine al usuario
     if (!isBotAdmin) return m.reply(tradutor.texto3);
 
     if (isBotAdmin && bot.restrict) {
       try {
-        // Enviar un mensaje de eliminación (debe eliminar correctamente)
-        await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet } });
+        // Eliminar el mensaje del usuario
+        await conn.sendMessage(m.chat, { 
+          delete: { 
+            remoteJid: m.chat, 
+            fromMe: false, 
+            id: bang, 
+            participant: delet 
+          } 
+        });
 
         // Eliminar al usuario del grupo
         await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
