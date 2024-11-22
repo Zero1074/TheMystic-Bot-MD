@@ -15,7 +15,6 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
   const delet = m.key.participant;
   const bang = m.key.id;
   const bot = global.db.data.settings[this.user.jid] || {};
-  const user = `@${m.sender.split`@`[0]}`;
   const isGroupLink = linkRegex.exec(m.text);
   const grupo = `https://chat.whatsapp.com`;
 
@@ -27,7 +26,7 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
   }
 
   if (isAdmin && chat.antiLink && m.text.includes(grupo)) {
-    return m.reply(tradutor.texto1.replace('@user', '@' + user.split('@')[0]));
+    return; // No respondemos al usuario que envió el link
   }
 
   if (chat.antiLink && isGroupLink && !isAdmin) {
@@ -36,18 +35,28 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
       if (m.text.includes(linkThisGroup)) return !0;
     }
 
-    // Mensaje cuando se elimina al usuario
-    const kickMessage = `> Usuario @${m.sender.split`@`[0]} eliminado por Anti-link.`;
+    // Mensaje cuando se elimina al usuario (sin respuesta directa)
+    const kickMessage = `> Usuario eliminado por Anti-Link.`;
 
-    await this.sendMessage(m.chat, { text: kickMessage, mentions: [m.sender] }, { quoted: m });
+    // Enviar el mensaje explicativo sin responder a nadie
+    await this.sendMessage(m.chat, { text: kickMessage });
 
+    // Asegurarnos de que el bot elimine al usuario
     if (!isBotAdmin) return m.reply(tradutor.texto3);
 
     if (isBotAdmin && bot.restrict) {
-      await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet } });
-      const responseb = await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
-      if (responseb[0].status === '404') return;
-    } else if (!bot.restrict) return m.reply(tradutor.texto4);
+      try {
+        // Enviar un mensaje de eliminación (debe eliminar correctamente)
+        await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet } });
+
+        // Eliminar al usuario del grupo
+        await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
+      } catch (error) {
+        console.error('Error al intentar eliminar al usuario:', error);
+      }
+    } else if (!bot.restrict) {
+      return m.reply(tradutor.texto4);
+    }
   }
 
   return !0;
