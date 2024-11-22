@@ -1,40 +1,33 @@
-// TheMystic-Bot-MD@BrunoSobrino - _antitoxic.js
+const toxicRegex = /\b(porno|cp|cafe con pan|café con pan|camiones pesados)\b/i;
 
- // Para configurar o idioma, na raiz do projeto altere o arquivo config.json
-  // Para configurar el idioma, en la raíz del proyecto, modifique el archivo config.json.
-  // To set the language, in the root of the project, modify the config.json file.
-
-
-const toxicRegex = /\b(puto|puta|rata|estupido|imbecil|rctmre|mrd|verga|vrga|maricon)\b/i;
-
-export async function before(m, {isAdmin, isBotAdmin, isOwner}) {
-  const datas = global
-    const idioma = datas.db.data.users[m.sender].language || global.defaultLenguaje
-    const _translate = JSON.parse(fs.readFileSync(`./src/languages/${idioma}.json`))
-    const tradutor = _translate.plugins._antitoxic
-
-  if (m.isBaileys && m.fromMe) {
-    return !0;
-  }
-  if (!m.isGroup) {
+export async function before(m, { isAdmin, isBotAdmin, isOwner }) {
+  // Asegúrate de que el bot es administrador
+  if (!isBotAdmin) {
+    console.error('El bot necesita permisos de administrador para eliminar usuarios.');
     return !1;
   }
-  const user = global.db.data.users[m.sender];
-  const chat = global.db.data.chats[m.chat];
-  const bot = global.db.data.settings[mconn.conn.user.jid] || {};
+
+  // No actuar si el mensaje es del bot o no es un grupo
+  if (m.isBaileys && m.fromMe) return !0;
+  if (!m.isGroup) return !1;
+
+  // Verifica si el mensaje contiene una palabra prohibida
   const isToxic = toxicRegex.exec(m.text);
 
-  if (isToxic && chat.antiToxic && !isOwner && !isAdmin) {
-    user.warn += 1;
-    if (!(user.warn >= 5)) await m.reply(`${tradutor.texto1}` + `${user.warn == 1 ? `@${m.sender.split`@`[0]}` : `@${m.sender.split`@`[0]}`}, ${tradutor.texto1_1}"${isToxic}" ${tradutor.texto1_2} ${user.warn}/5` + '*', false, {mentions: [m.sender]});
-  }
-
-  if (user.warn >= 5) {
-    user.warn = 0;
-    await m.reply(`${tradutor.texto2} @${m.sender.split('@')[0]}, ${tradutor.texto2_1}`, false, {mentions: [m.sender]});
-    user.banned = true;
-    await mconn.conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
-    // await this.updateBlockStatus(m.sender, 'block')
+  // Si se detecta una palabra prohibida y el remitente no es admin ni owner
+  if (isToxic && !isOwner && !isAdmin) {
+    try {
+      // Notifica al grupo y elimina al usuario
+      await m.reply(
+        `> Usuario eliminado por anti-toxic`,
+        false,
+        { mentions: [m.sender] }
+      );
+      await m.conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove'); // Elimina al usuario
+      user.banned = true; // Marca al usuario como baneado
+    } catch (error) {
+      console.error('Error al intentar eliminar al usuario:', error);
+    }
   }
   return !1;
 }
