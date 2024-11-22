@@ -762,7 +762,12 @@ export async function handler(chatUpdate) {
         }
       }
       const str2Regex = (str) => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
-      const _prefix = plugin.customPrefix ? plugin.customPrefix : conn.prefix ? conn.prefix : global.prefix;
+     const _prefix = plugin.customPrefix 
+    ? plugin.customPrefix 
+    : conn.prefix 
+    ? conn.prefix 
+    : '/';
+
       const match = (_prefix instanceof RegExp ? // RegExp Mode?
         [[_prefix.exec(m.text), _prefix]] :
         Array.isArray(_prefix) ? // Array?
