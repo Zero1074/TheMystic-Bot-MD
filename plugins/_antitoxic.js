@@ -14,6 +14,31 @@ export async function before(m, { isAdmin, isBotAdmin, isOwner }) {
   const user = global.db.data.users[m.sender];
   const chat = global.db.data.chats[m.chat];
 
+  // Verificar si el comando /enable antitoxic está siendo enviado
+  if (m.text.startsWith('/enable antitoxic')) {
+    if (isAdmin || isOwner) {
+      chat.antitoxic = true;
+      await m.reply('> Anti-Tóxico activado');
+      console.log(`Anti-Tóxico activado por ${m.sender}`);  // Depuración
+      return !1;
+    } else {
+      await m.reply('> Solo los administradores o el propietario pueden activar el antitóxico.');
+      return !1;
+    }
+  }
+
+  // Comando para deshabilitar antitóxico
+  if (m.text.startsWith('/disable antitoxic') && (isAdmin || isOwner)) {
+    chat.antitoxic = false;
+    await m.reply('> Anti-Tóxico desactivado');
+    return !1;
+  }
+
+  // Verifica si el antitóxico está habilitado
+  if (!chat.antitoxic && !isOwner) {
+    return !1; // No procesar el mensaje si el antitóxico no está habilitado
+  }
+
   // Verifica si el mensaje contiene una palabra prohibida
   const isToxic = toxicRegex.exec(m.text);
 
@@ -85,3 +110,4 @@ export async function before(m, { isAdmin, isBotAdmin, isOwner }) {
   }
   return !1;
 }
+
