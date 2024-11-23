@@ -91,15 +91,14 @@ export async function before(m, { isAdmin, isBotAdmin, isOwner }) {
           { mentions: [m.sender] }
         );
       } else {
-        // Si llega a 3 advertencias, eliminar al usuario
+        // Si llega a 3 advertencias, eliminar al usuario del grupo
         await m.reply(
-          `> Usuario eliminado por anti-toxic`,
+          `> Usuario eliminado del grupo por anti-toxic`,
           false,
           { mentions: [m.sender] }
         );
-        await m.conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove'); // Elimina al usuario
-        user.banned = true; // Marca al usuario como baneado
-        user.warn = 0; // Resetea el contador de advertencias
+        await m.conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove'); // Elimina al usuario del grupo
+        user.warn = 0; // Resetea el contador de advertencias, sin marcar al usuario como baneado
       }
 
       // Guardar los datos del usuario
@@ -110,4 +109,3 @@ export async function before(m, { isAdmin, isBotAdmin, isOwner }) {
   }
   return !1;
 }
-
