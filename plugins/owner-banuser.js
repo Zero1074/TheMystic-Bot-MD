@@ -1,20 +1,24 @@
+const handler = async (m, { conn }) => {
+  const datas = global;
 
-
-const handler = async (m, {conn, participants, usedPrefix, command}) => {
-  const datas = global
-  const idioma = datas.db.data.users[m.sender].language || global.defaultLenguaje
-  const _translate = JSON.parse(fs.readFileSync(`./src/languages/${idioma}.json`))
-  const tradutor = _translate.plugins.owner_banuser
-
-  const BANtext = `${tradutor.texto1}\n*${usedPrefix + command} @${global.suittag}*`;
-  if (!m.mentionedJid[0] && !m.quoted) return m.reply(BANtext, m.chat, {mentions: conn.parseMention(BANtext)});
+  // Verifica si hay un usuario mencionado o si se citó un mensaje
   let who;
-  if (m.isGroup) who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted.sender;
-  else who = m.chat;
-  const users = global.db.data.users;
+  if (m.isGroup) {
+    who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted?.sender;
+  } else {
+    who = m.chat;
+  }
+
+  if (!who) return; // Si no hay un objetivo, no hacer nada
+
+  // Marca al usuario como baneado
+  const users = datas.db.data.users;
   users[who].banned = true;
-  m.reply(tradutor.texto2);
+
+  // Reacciona con un emoji de candado cerrado al mensaje del comando
+  await conn.sendMessage(m.chat, { react: { text: '🔒', key: m.key } });
 };
+
 handler.command = /^banuser$/i;
 handler.rowner = true;
 export default handler;
