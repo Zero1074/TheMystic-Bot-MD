@@ -1,5 +1,4 @@
 
-
 const handler = async (m, {conn, text, command}) => {
   const datas = global
   const idioma = datas.db.data.users[m.sender].language || global.defaultLenguaje
@@ -10,7 +9,8 @@ const handler = async (m, {conn, text, command}) => {
   await conn.reply(id, tradutor.texto1);
   await conn.groupLeave(id);
 };
-handler.command = /^(out|leavegc|leave|salirdelgrupo)$/i;
+
+handler.command = /^bye$/i;  // Cambiado para que el comando sea "/bye"
 handler.group = true;
 handler.rowner = true;
 export default handler;
