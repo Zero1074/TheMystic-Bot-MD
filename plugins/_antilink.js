@@ -1,15 +1,11 @@
-const linkRegex = /chat.whatsapp.com\/([0-9A-Za-z]{20,24})/i;
+const linkRegex = /(?:chat\.whatsapp\.com\/([0-9A-Za-z]{20,24})|whatsapp\.com\/channel\/([A-Za-z0-9-_]{20,40}))/i;
 
 export async function before(m, { conn, isAdmin, isBotAdmin }) {
-  const idioma = global.db.data.users[m.sender].language || global.defaultLenguaje;
-  const _translate = JSON.parse(fs.readFileSync(`./src/languages/${idioma}.json`));
-  const tradutor = _translate.plugins._antilink;
-
   if (m.isBaileys && m.fromMe) {
-    return !0;
+    return true;
   }
 
-  if (!m.isGroup) return !1;
+  if (!m.isGroup) return false;
 
   const chat = global.db.data.chats[m.chat];
   const delet = m.key.participant;
@@ -18,45 +14,47 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
   const isGroupLink = linkRegex.exec(m.text);
   const grupo = `https://chat.whatsapp.com`;
 
-  // Mensaje cuando se activa el Anti-Link
+  // Activar Anti-Link si está desactivado
   if (chat.antiLink === undefined || chat.antiLink === false) {
     chat.antiLink = true;
     m.reply("> Anti-Link activado.");
-    return !0;
+    return true;
   }
 
+  // Si el mensaje contiene un enlace del grupo, ignoramos a los admins
   if (isAdmin && chat.antiLink && m.text.includes(grupo)) {
-    return; // No respondemos al usuario que envió el link
+    return;
   }
 
+  // Si no es admin y se detecta un enlace de grupo o canal
   if (chat.antiLink && isGroupLink && !isAdmin) {
     if (isBotAdmin) {
       const linkThisGroup = `https://chat.whatsapp.com/${await this.groupInviteCode(m.chat)}`;
-      if (m.text.includes(linkThisGroup)) return !0;
+      if (m.text.includes(linkThisGroup)) return true;
     }
 
-    // Mensaje cuando se elimina al usuario (con etiqueta)
+    // Mensaje de eliminación con etiqueta
     const kickMessage = `> Usuario @${m.sender.split('@')[0]} eliminado por Anti-Link.`;
 
-    // Enviar el mensaje con la mención
-    await conn.sendMessage(m.chat, { 
-      text: kickMessage, 
-      mentions: [m.sender] 
+    // Enviar mensaje con mención
+    await conn.sendMessage(m.chat, {
+      text: kickMessage,
+      mentions: [m.sender],
     });
 
-    // Asegurarnos de que el bot elimine al usuario
-    if (!isBotAdmin) return m.reply(tradutor.texto3);
+    // Verificar que el bot tenga permisos para eliminar al usuario
+    if (!isBotAdmin) return m.reply("> No tengo permisos para eliminar usuarios.");
 
     if (isBotAdmin && bot.restrict) {
       try {
         // Eliminar el mensaje del usuario
-        await conn.sendMessage(m.chat, { 
-          delete: { 
-            remoteJid: m.chat, 
-            fromMe: false, 
-            id: bang, 
-            participant: delet 
-          } 
+        await conn.sendMessage(m.chat, {
+          delete: {
+            remoteJid: m.chat,
+            fromMe: false,
+            id: bang,
+            participant: delet,
+          },
         });
 
         // Eliminar al usuario del grupo
@@ -65,9 +63,9 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
         console.error('Error al intentar eliminar al usuario:', error);
       }
     } else if (!bot.restrict) {
-      return m.reply(tradutor.texto4);
+      return m.reply("> No tengo permisos para eliminar usuarios.");
     }
   }
 
-  return !0;
+  return true;
 }
